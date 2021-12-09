@@ -1,0 +1,42 @@
+version: '3'
+services:
+  discogsnewreleasenotification_container:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../:/app_discogsnewreleasenotification:rw
+    ports:
+      - 5000:5000
+      - 3000:3000
+    networks:
+      - discogsnewreleasenotification_network
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: discogsnewreleasenotification
+      MONGO_INITDB_ROOT_PASSWORD: discogsnewreleasenotification
+    ports:
+      - 27017:27017
+    networks:
+      - discogsnewreleasenotification_network
+
+  mongo-express:
+    image: mongo-express
+    ports:
+      - 5001:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: discogsnewreleasenotification
+      ME_CONFIG_MONGODB_ADMINPASSWORD: discogsnewreleasenotification
+      ME_CONFIG_MONGODB_URL: 'mongodb://discogsnewreleasenotification:discogsnewreleasenotification@mongo:27017/db?authSource=admin'
+    networks:
+      - discogsnewreleasenotification_network
+
+networks:
+  discogsnewreleasenotification_network:
+    driver: 'bridge'
