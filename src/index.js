@@ -3,13 +3,13 @@ import env from './utils/env.util'
 import request from './utils/request.util'
 import sleep from './utils/sleep.util'
 import Item from './models/item.model'
-import sendMail from './utils/sendMail'
+import sendMail from './utils/sendMail.util'
+import log from './utils/log.util'
 
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100
 
-// eslint-disable-next-line no-console
-console.log('Getting releases data')
+log('Getting releases data')
 
 /**
  * Get number of releases for a given artist
@@ -60,14 +60,16 @@ const releasesFound = releases.filter(release => release.type === 'release')
 /** Release of type `master` found */
 const mastersFound = releases.filter(release => release.type === 'master')
 
-// eslint-disable-next-line no-console
-console.log('Getting masters data')
+log('Getting masters data')
 
 // As releases on Discogs API can also be of type 'master' (this type of release is a folder of releases), we need to get all releases of a master
 // eslint-disable-next-line no-restricted-syntax
 for (const [index, master] of mastersFound.entries()) {
-    // eslint-disable-next-line no-console
-    console.log(`Master ${index + 1}/${mastersFound.length}`)
+    log(`Master ${index + 1}/${mastersFound.length}`, true)
+
+    // If last element, reset stdout position
+    if (mastersFound.length - 1 === index)
+        log()
 
     /**
      * Get number of versions for a given master
@@ -113,9 +115,10 @@ for (const [index, master] of mastersFound.entries()) {
             role: master.role?.match(/[A-Z][a-z]+/g).join(' '),
         })
 
-    // Sleep some times to prevent being blocked
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(2500)
+    // If not last item, sleep some times to prevent being blocked
+    if (mastersFound.length - 1 !== index)
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(2500)
 }
 
 // Connect to DB
@@ -132,12 +135,12 @@ const releasesToSend = releasesFound.filter(itemFound => !itemsDb.map(itemDb => 
 
 // If new items found, send mail
 if (releasesToSend?.length > 0) {
-    // eslint-disable-next-line no-console
-    console.log('Sending mail')
+    // reset()
+    log('Sending mail')
     await sendMail(releasesToSend)
 } else {
-    // eslint-disable-next-line no-console
-    console.log('No data to send')
+    // reset()
+    log('No data to send')
 }
 
 // Upsert data found in DB
@@ -147,7 +150,6 @@ await Promise.all(releasesFound.map(item => Item.findOneAndUpdate(
     { upsert: true },
 )))
 
-// eslint-disable-next-line no-console
-console.log('Done')
+log('Done')
 
 process.exit(0)

@@ -65,7 +65,7 @@ heroku run <YOU-SCRIPT> -a <YOUR-APP-NAME>
 # Example: heroku run npm start -a discogs-notif-new-items
 ```
 
-### Condigure the schedule task
+### Configure the schedule task
 
 In the **Ressource** tab:
 
