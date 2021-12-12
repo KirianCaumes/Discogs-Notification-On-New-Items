@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-await-in-loop */
 import mongoose from 'mongoose'
 import env from './utils/env.util'
 import request from './utils/request.util'
@@ -8,149 +10,151 @@ import sendMail from './utils/sendMail.util'
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100
 
-// eslint-disable-next-line no-console
-console.log('Getting releases data')
+for (const artistId of env.DISCOGS_ARTIST_IDS) {
+    // eslint-disable-next-line no-console
+    console.log(`Artist: ${artistId}`)
 
-/**
- * Get number of releases for a given artist
- * @type {import('axios').AxiosResponse<ApiDiscogsArtistReleaseType>}
- */
-const releasesTotalResult = await request({
-    url: `artists/${env.DISCOGS_ARTIST_ID}/releases`,
-    params: {
-        per_page: 1,
-    },
-})
-
-/**
- * Get all releases for a given artist
- * @type {import('axios').AxiosResponse<ApiDiscogsArtistReleaseType>[]}
- */
-const releasesResults = await Promise.all(
-    new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE))
-        .fill({})
-        .map((_, i) => request({
-            url: `artists/${env.DISCOGS_ARTIST_ID}/releases`,
-            params: {
-                per_page: MAX_RELEASE_PER_PAGE,
-                page: i + 1,
-            },
-        })),
-)
-
-/** Array of releases: data are transformed and cleaned */
-const releases = releasesResults
-    .map(releasesResult => releasesResult.data.releases)
-    .flat()
-    .map(release => ({
-        id: release.id,
-        type: release.type,
-        artist: release.artist,
-        label: release.label,
-        title: release.title,
-        format: release.format,
-        date: release.year !== 0 ? release.year?.toString() : undefined,
-        thumb: release.thumb,
-        role: release.role?.match(/[A-Z][a-z]+/g).join(' '),
-    }))
-
-/** Release of type `release` found */
-const releasesFound = releases.filter(release => release.type === 'release')
-
-/** Release of type `master` found */
-const mastersFound = releases.filter(release => release.type === 'master')
-
-// eslint-disable-next-line no-console
-console.log('Getting masters data')
-
-// As releases on Discogs API can also be of type 'master' (this type of release is a folder of releases), we need to get all releases of a master
-// eslint-disable-next-line no-restricted-syntax
-for (const [index, master] of mastersFound.entries()) {
-    // Print first, last and every ten elements
-    if (index === 0 || (index + 1) % 10 === 0 || index === mastersFound.length - 1)
-        // eslint-disable-next-line no-console
-        console.log(`Master ${index + 1}/${mastersFound.length}`)
+    // eslint-disable-next-line no-console
+    console.log('Getting releases data')
 
     /**
-     * Get number of versions for a given master
-     * @type {import('axios').AxiosResponse<ApiDiscogsMasterType>}
+     * Get number of releases for a given artist
+     * @type {import('axios').AxiosResponse<ApiDiscogsArtistReleaseType>}
      */
-    // eslint-disable-next-line no-await-in-loop
-    const mastersTotalResult = await request({
-        url: `masters/${master.id}/versions`,
+    const releasesTotalResult = await request({
+        url: `artists/${artistId}/releases`,
         params: {
             per_page: 1,
         },
     })
 
     /**
-     * Get all versions for a given master
-     * @type {import('axios').AxiosResponse<ApiDiscogsMasterType>[]}
+     * Get all releases for a given artist
+     * @type {import('axios').AxiosResponse<ApiDiscogsArtistReleaseType>[]}
      */
-    // eslint-disable-next-line no-await-in-loop
-    const mastersResults = await Promise.all(
-        new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE))
+    const releasesResults = await Promise.all(
+        new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE))
             .fill({})
             .map((_, i) => request({
-                url: `masters/${master.id}/versions`,
+                url: `artists/${artistId}/releases`,
                 params: {
-                    per_page: MAX_VERSION_PER_PAGE,
+                    per_page: MAX_RELEASE_PER_PAGE,
                     page: i + 1,
                 },
             })),
     )
 
-    // Add releases from master to `releasesFound`
-    // eslint-disable-next-line no-restricted-syntax
-    for (const version of mastersResults.map(mastersResult => mastersResult.data.versions).flat())
-        releasesFound.push({
-            id: version.id,
-            type: 'release',
-            artist: master.artist,
-            label: version.label,
-            title: version.title,
-            format: version.format,
-            date: version.released !== '0' ? version.released : undefined,
-            thumb: version.thumb,
-            role: master.role?.match(/[A-Z][a-z]+/g).join(' '),
+    /** Array of releases: data are transformed and cleaned */
+    const releases = releasesResults
+        .map(releasesResult => releasesResult.data.releases)
+        .flat()
+        .map(release => ({
+            id: release.id,
+            type: release.type,
+            artist: release.artist,
+            label: release.label,
+            title: release.title,
+            format: release.format,
+            date: release.year !== 0 ? release.year?.toString() : undefined,
+            thumb: release.thumb,
+            role: release.role?.match(/[A-Z][a-z]+/g).join(' '),
+        }))
+
+    /** Release of type `release` found */
+    const releasesFound = releases.filter(release => release.type === 'release')
+
+    /** Release of type `master` found */
+    const mastersFound = releases.filter(release => release.type === 'master')
+
+    // eslint-disable-next-line no-console
+    console.log('Getting masters data')
+
+    // As releases on Discogs API can also be of type 'master' (this type of release is a folder of releases), we need to get all releases of a master
+
+    for (const [index, master] of mastersFound.entries()) {
+        // Print first, last and every ten elements
+        if (index === 0 || (index + 1) % 10 === 0 || index === mastersFound.length - 1)
+            // eslint-disable-next-line no-console
+            console.log(`Master ${index + 1}/${mastersFound.length}`)
+
+        /**
+         * Get number of versions for a given master
+         * @type {import('axios').AxiosResponse<ApiDiscogsMasterType>}
+         */
+        const mastersTotalResult = await request({
+            url: `masters/${master.id}/versions`,
+            params: {
+                per_page: 1,
+            },
         })
 
-    // If not last item, sleep some times to prevent being blocked
-    if (index !== mastersFound.length - 1)
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(2500)
-}
+        /**
+         * Get all versions for a given master
+         * @type {import('axios').AxiosResponse<ApiDiscogsMasterType>[]}
+         */
+        const mastersResults = await Promise.all(
+            new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE))
+                .fill({})
+                .map((_, i) => request({
+                    url: `masters/${master.id}/versions`,
+                    params: {
+                        per_page: MAX_VERSION_PER_PAGE,
+                        page: i + 1,
+                    },
+                })),
+        )
 
-// Connect to DB
-await mongoose.connect(env.DB_URI)
+        // Add releases from master to `releasesFound`
 
-/**
- * Items found from DB
- * @type {import('./models/item.model').ItemSchema[]}
- */
-const itemsDb = await Item.find({})
+        for (const version of mastersResults.map(mastersResult => mastersResult.data.versions).flat())
+            releasesFound.push({
+                id: version.id,
+                type: 'release',
+                artist: master.artist,
+                label: version.label,
+                title: version.title,
+                format: version.format,
+                date: version.released !== '0' ? version.released : undefined,
+                thumb: version.thumb,
+                role: master.role?.match(/[A-Z][a-z]+/g).join(' '),
+            })
 
-/** List of item to send by mail */
-const releasesToSend = releasesFound.filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
+        // If not last item, sleep some times to prevent being blocked
+        if (index !== mastersFound.length - 1)
+            await sleep(2500)
+    }
 
-// If new items found, send mail
-if (releasesToSend?.length > 0) {
+    // Connect to DB
+    await mongoose.connect(env.DB_URI)
+
+    /**
+     * Items found from DB
+     * @type {import('./models/item.model').ItemSchema[]}
+     */
+    const itemsDb = await Item.find({})
+
+    /** List of item to send by mail */
+    const releasesToSend = releasesFound.filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
+
+    // If new items found, send mail
+    if (releasesToSend?.length > 0) {
+        // eslint-disable-next-line no-console
+        console.log(`Sending mail: ${releasesToSend.length} new item(s) found`)
+        await sendMail(releasesToSend)
+    } else {
+        // eslint-disable-next-line no-console
+        console.log('No data to send')
+    }
+
+    // Upsert data found in DB
+    await Promise.all(releasesFound.map(item => Item.findOneAndUpdate(
+        { id: item.id, artistId },
+        { id: item.id, title: `${item.artist} - ${item.title}`, artistId },
+        { upsert: true },
+    )))
+
     // eslint-disable-next-line no-console
-    console.log(`Sending mail: ${releasesToSend.length} new item(s) found`)
-    await sendMail(releasesToSend)
-} else {
-    // eslint-disable-next-line no-console
-    console.log('No data to send')
+    console.log('Done\r')
 }
-
-// Upsert data found in DB
-await Promise.all(releasesFound.map(item => Item.findOneAndUpdate(
-    { id: item.id },
-    { id: item.id, title: `${item.artist} - ${item.title}` },
-    { upsert: true },
-)))
-
-// eslint-disable-next-line no-console
-console.log('Done')
 
 process.exit(0)

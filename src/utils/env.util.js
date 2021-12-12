@@ -6,7 +6,7 @@ dotenv.config()
  * Env variables
  */
 const env = {
-    DISCOGS_ARTIST_ID: process.env.DISCOGS_ARTIST_ID,
+    DISCOGS_ARTIST_IDS: process.env.DISCOGS_ARTIST_IDS?.split(',') ?? [],
     DISCOGS_API_KEY: process.env.DISCOGS_API_KEY,
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
     MAIL_FROM: process.env.MAIL_FROM || 'example@example.com',

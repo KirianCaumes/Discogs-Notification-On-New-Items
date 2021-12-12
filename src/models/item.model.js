@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /**
- * @typedef {{id: number, title: string}} ItemSchema
+ * @typedef {{id: number, title: string, artistId: string}} ItemSchema
  */
 
 /** @type {mongoose.Schema<ItemSchema>} */
@@ -9,6 +9,7 @@ const itemSchema = new mongoose.Schema(
     {
         id: { type: Number },
         title: { type: String },
+        artistId: { type: String },
     },
     {
         timestamps: true,
