@@ -131,7 +131,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
      * Items found from DB
      * @type {import('./models/item.model').ItemSchema[]}
      */
-    const itemsDb = await Item.find({})
+    const itemsDb = await Item.find({ artistId })
 
     /** List of item to send by mail */
     const releasesToSend = releasesFound.filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
