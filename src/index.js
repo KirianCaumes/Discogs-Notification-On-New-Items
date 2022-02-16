@@ -70,7 +70,6 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     console.log('Getting masters data')
 
     // As releases on Discogs API can also be of type 'master' (this type of release is a folder of releases), we need to get all releases of a master
-
     for (const [index, master] of mastersFound.entries()) {
         // Print first, last and every ten elements
         if (index === 0 || (index + 1) % 10 === 0 || index === mastersFound.length - 1)
@@ -116,7 +115,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
                 format: version.format,
                 date: version.released !== '0' ? version.released : undefined,
                 thumb: version.thumb,
-                role: master.role?.match(/[A-Z][a-z]+/g).join(' '),
+                role: master.role?.match(/[A-Z][a-z]+/g)?.join(' '),
             })
 
         // If not last item, sleep some times to prevent being blocked
@@ -134,7 +133,10 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     const itemsDb = await Item.find({ artistId })
 
     /** List of item to send by mail */
-    const releasesToSend = releasesFound.filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
+    const releasesToSend = releasesFound
+        .filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
+        .sort((a, b) => a.artist?.localeCompare(b.artist) || a.title?.localeCompare(b.title) || a.role?.localeCompare(b.role))
+        .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
 
     // If new items found, send mail
     if (releasesToSend?.length > 0) {

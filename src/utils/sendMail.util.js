@@ -32,7 +32,7 @@ export default function sendMail(releasesToSend) {
             replyTo: env.MAIL_REPLY,
             subject: `New release(s) - ${new Date().toLocaleString('FR-fr', { year: 'numeric', month: '2-digit', day: '2-digit' })}`,
             html: Handlebars.compile(fs.readFileSync('./src/templates/mail.template.html').toString())({
-                items: releasesToSend.sort((a, b) => a.artist?.localeCompare(b.artist) || a.title?.localeCompare(b.title)),
+                items: releasesToSend,
             }),
         })
 }

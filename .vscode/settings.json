@@ -10,7 +10,6 @@
 	"eslint.workingDirectories": [
 		"./"
 	],
-	"html.format.wrapLineLength": 0,
 	"eslint.alwaysShowStatus": true,
 	"versionlens.suggestions.showOnStartup": true,
 	"terminal.integrated.defaultProfile.linux": "bash",
@@ -20,4 +19,5 @@
 			"icon": "terminal-bash"
 		},
 	},
+	"html.format.wrapAttributes": "force-expand-multiline"
 }
