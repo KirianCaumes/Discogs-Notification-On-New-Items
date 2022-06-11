@@ -41,8 +41,9 @@ module.exports = {
         'function-paren-newline': ['error', 'consistent'],
         'jsdoc/no-undefined-types': ['warn', {
             definedTypes: [
-                'ApiDiscogsArtistReleaseType',
-                'ApiDiscogsMasterType',
+                'ApiDiscogsArtistsReleasesType',
+                'ApiDiscogsMastersVersionsType',
+                'ApiDiscogsReleasesType',
                 'RequestResponseType',
             ],
         }],

@@ -19,7 +19,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
     /**
      * Get number of releases for a given artist
-     * @type {import('axios').AxiosResponse<ApiDiscogsArtistReleaseType>}
+     * @type {import('axios').AxiosResponse<ApiDiscogsArtistsReleasesType>}
      */
     const releasesTotalResult = await request({
         url: `artists/${artistId}/releases`,
@@ -30,7 +30,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
     /**
      * Get all releases for a given artist
-     * @type {import('axios').AxiosResponse<ApiDiscogsArtistReleaseType>[]}
+     * @type {import('axios').AxiosResponse<ApiDiscogsArtistsReleasesType>[]}
      */
     const releasesResults = await Promise.all(
         new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE))
@@ -78,7 +78,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         /**
          * Get number of versions for a given master
-         * @type {import('axios').AxiosResponse<ApiDiscogsMasterType>}
+         * @type {import('axios').AxiosResponse<ApiDiscogsMastersVersionsType>}
          */
         const mastersTotalResult = await request({
             url: `masters/${master.id}/versions`,
@@ -89,7 +89,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         /**
          * Get all versions for a given master
-         * @type {import('axios').AxiosResponse<ApiDiscogsMasterType>[]}
+         * @type {import('axios').AxiosResponse<ApiDiscogsMastersVersionsType>[]}
          */
         const mastersResults = await Promise.all(
             new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE))
@@ -137,6 +137,40 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         .filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
         .sort((a, b) => a.artist?.localeCompare(b.artist) || a.title?.localeCompare(b.title) || a.role?.localeCompare(b.role))
         .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
+
+    /** Ids to be deleted because of Appearance */
+    const idsToBeDeleted = []
+
+    /** Release with the role Appearance or Track Appearance */
+    const appearances = releasesToSend.filter(release => ['Track Appearance', 'Appearance'].includes(release.role))
+
+    // Check if appearance trully include artist
+    for (const [index, appearance] of appearances.entries()) {
+        // Print first, last and every ten elements
+        if (index === 0 || (index + 1) % 10 === 0 || index === appearances.length - 1)
+            // eslint-disable-next-line no-console
+            console.log(`Appearance ${index + 1}/${appearances.length}`)
+
+        /**
+         * Releases found
+         * @type {import('axios').AxiosResponse<ApiDiscogsReleasesType>}
+         */
+        const releaseResult = await request({
+            url: `releases/${appearance.id}`,
+        })
+
+        // If artist not found, push item's id to be removed later
+        if (!releaseResult.data.tracklist.map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])] ?? []).flat().some(x => x.id.toString() === artistId))
+            idsToBeDeleted.push(releaseResult.data.id)
+
+        // If not last item, sleep some times to prevent being blocked
+        if (index !== appearances.length - 1)
+            await sleep(2500)
+    }
+
+    // Remove items from releasesToSend with idsToBeDeleted
+    for (const idToBeDeleted of idsToBeDeleted.reverse())
+        releasesToSend.splice(releasesToSend.findIndex(x => x.id === idToBeDeleted), 1)
 
     // If new items found, send mail
     if (releasesToSend?.length > 0) {

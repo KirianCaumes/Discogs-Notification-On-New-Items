@@ -1,5 +1,5 @@
 /**
- * @typedef {object} ApiDiscogsArtistReleaseType
+ * @typedef {object} ApiDiscogsArtistsReleasesType
  * @property {object} pagination pagination
  * @property {number} pagination.page page
  * @property {number} pagination.pages pages
