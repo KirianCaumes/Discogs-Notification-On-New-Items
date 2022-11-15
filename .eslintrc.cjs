@@ -4,34 +4,44 @@ module.exports = {
         es6: true,
         jest: true,
     },
-    settings: {
-        'import/resolver': {
-            node: {
-                paths: ['src'],
-                extensions: ['.js', '.jsx'],
-            },
-            typescript: {
-                alwaysTryTypes: true,
-            },
-        },
-        jsdoc: {
-            mode: 'typescript',
-        },
-    },
     extends: [
         'plugin:jsdoc/recommended',
-        'airbnb',
+        'airbnb-base',
     ],
-    parser: '@babel/eslint-parser',
     parserOptions: {
-        ecmaVersion: 2021,
+        ecmaVersion: 'latest',
         sourceType: 'module',
-        requireConfigFile: false,
     },
-    plugins: ['jsdoc', 'react', 'react-hooks'],
+    plugins: [
+        'jsdoc',
+    ],
     rules: {
-        indent: ['error', 4, { ignoredNodes: ['TemplateLiteral'], SwitchCase: 1 }],
+        indent: [
+            'warn',
+            4,
+            {
+                SwitchCase: 1,
+            },
+        ],
         semi: ['warn', 'never'],
+        'jsdoc/require-jsdoc': ['warn', {
+            checkConstructors: false,
+            contexts: [
+                'ClassDeclaration', 'FunctionDeclaration', 'MethodDefinition',
+                { context: 'TSPropertySignature', inlineCommentBlock: true }],
+        }],
+        'jsdoc/require-description': ['warn', {
+            checkConstructors: false,
+            contexts: [
+                'TSPropertySignature', 'ClassDeclaration', 'ArrowFunctionExpression', 'FunctionDeclaration', 'FunctionExpression', 'MethodDefinition',
+            ],
+        }],
+        'jsdoc/require-param-description': ['warn', { contexts: ['any'] }],
+        'jsdoc/require-param': ['warn', { checkDestructuredRoots: false }],
+        'jsdoc/newline-after-description': ['error', 'never'],
+        'jsdoc/valid-types': ['off'],
+        // 'capitalized-comments': ['warn', 'always'], // Not always usefull as it also fix comment with code
+        'no-underscore-dangle': ['error', { allow: ['_id', '_attributes', '__value__', '_text'] }],
         curly: ['warn', 'multi', 'consistent'],
         'template-curly-spacing': 'off', // Issue: https://stackoverflow.com/questions/48391913/eslint-error-cannot-read-property-range-of-null
         'max-len': ['warn', { code: 160 }],
@@ -39,24 +49,7 @@ module.exports = {
         'nonblock-statement-body-position': ['warn', 'below'],
         'arrow-parens': ['warn', 'as-needed'],
         'function-paren-newline': ['error', 'consistent'],
-        'jsdoc/no-undefined-types': ['warn', {
-            definedTypes: [
-                'ApiDiscogsArtistsReleasesType',
-                'ApiDiscogsMastersVersionsType',
-                'ApiDiscogsReleasesType',
-                'RequestResponseType',
-            ],
-        }],
-        'jsdoc/check-tag-names': ['warn', {
-            definedTags: ['debug'],
-        }],
-        'jsdoc/require-jsdoc': ['warn', {
-            require: {
-                ClassDeclaration: true,
-            },
-        }],
-        'jsdoc/valid-types': 'off',
-        'jsdoc/newline-after-description': 'off',
+        'no-extra-boolean-cast': ['error', { enforceForLogicalOperands: true }],
         'no-unused-vars': ['warn', { vars: 'all', args: 'after-used', ignoreRestSiblings: true }], // Must be at the end
     },
 }

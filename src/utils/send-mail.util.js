@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer'
-import sendgridTransport from 'nodemailer-sendgrid-transport'
+// import sendgridTransport from 'nodemailer-sendgrid-transport'
 import Handlebars from 'handlebars'
 import fs from 'fs'
+import nodemailerSendgrid from 'nodemailer-sendgrid'
 import env from './env.util'
 
 /**
@@ -21,11 +22,11 @@ import env from './env.util'
  */
 export default function sendMail(releasesToSend) {
     return nodemailer
-        .createTransport(sendgridTransport({
-            auth: {
-                api_key: env.SENDGRID_API_KEY,
-            },
-        }))
+        .createTransport(
+            nodemailerSendgrid({
+                apiKey: env.SENDGRID_API_KEY,
+            }),
+        )
         .sendMail({
             from: `"Discogs Bot" <${env.MAIL_FROM}>`,
             to: env.MAIL_TO,
