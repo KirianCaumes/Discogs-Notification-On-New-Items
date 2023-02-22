@@ -13,6 +13,7 @@ const env = {
     MAIL_REPLY: process.env.MAIL_REPLY || 'example@example.com',
     MAIL_TO: process.env.MAIL_TO,
     DB_URI: process.env.DB_URI,
+    LOCALE: process.env.LOCALE || 'EN-us',
 }
 
 export default env

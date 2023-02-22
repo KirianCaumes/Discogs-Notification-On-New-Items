@@ -1,6 +1,8 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import mongoose from 'mongoose'
+import Handlebars from 'handlebars'
+import { readFileSync } from 'fs'
 import { Item } from './models'
 import {
     env, request, sendMail, sleep,
@@ -175,7 +177,16 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     if (releasesToSend?.length > 0) {
         // eslint-disable-next-line no-console
         console.log(`Sending mail: ${releasesToSend.length} new item(s) found`)
-        await sendMail(releasesToSend)
+        await sendMail({
+            subject: [
+                'Discogs',
+                `${releasesToSend.length.toLocaleString(env.LOCALE)} New Release${releasesToSend.length > 1 ? 's' : ''}`,
+                `${new Date().toLocaleString(env.LOCALE, { year: 'numeric', month: '2-digit', day: '2-digit' })} `,
+            ].join(' - '),
+            html: Handlebars.compile(readFileSync('./src/templates/mail.template.html').toString())({
+                items: releasesToSend,
+            }),
+        })
     } else {
         // eslint-disable-next-line no-console
         console.log('No data to send')
