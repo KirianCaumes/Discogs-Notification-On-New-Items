@@ -14,6 +14,7 @@
 </head>
 
 <body>
+    <p>{{{message}}}</p>
     <table>
         {{#each items}}
         <tr>
@@ -27,6 +28,7 @@
                     <img
                         style="width: 100%;height: 100%;object-fit: contain;background: lightgray;"
                         src="{{this.thumb}}"
+                        alt="{{this.title}} ({{this.label}})"
                     />
                 </a>
             </td>
@@ -61,6 +63,16 @@
         </tr>
         {{/each}}
     </table>
+    <br />
+    <p style="font-size: 10px;font-style: italic;">
+        Automatically generated with <a
+            href="https://github.com/KirianCaumes/Discogs-notification-on-new-items"
+            target="_blank"
+            rel="noopener"
+        >
+            Discogs Notification On New Items
+        </a>.
+    </p>
 </body>
 
 </html>

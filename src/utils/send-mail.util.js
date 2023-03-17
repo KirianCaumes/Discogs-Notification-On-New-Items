@@ -17,7 +17,6 @@ export default function sendMail(mailOptions) {
         .sendMail({
             from: `"Discogs Bot" < ${env.MAIL_FROM}> `,
             to: env.MAIL_TO,
-            replyTo: env.MAIL_REPLY,
             ...mailOptions,
         })
 }

@@ -18,25 +18,18 @@ USER $USERNAME
 
 RUN sudo apt-get clean
 RUN sudo apt-get update
-RUN sudo apt-get -y install libnss3 && \
-    sudo apt-get -y install libasound2 && \
-    sudo apt-get -y install libatspi2.0-0 && \
-    sudo apt-get -y install libdrm2 && \
-    sudo apt-get -y install libgbm1 && \
-    sudo apt-get -y install libgtk-3-0 && \
-    sudo apt-get -y install libxkbcommon-x11-0 && \
-    sudo apt-get -y install curl && \
-    sudo apt-get -y install git && \
-    sudo apt-get -y install libxshmfence-dev && \
-    sudo apt-get -y install psmisc
+RUN sudo apt-get install gnupg -y \
+    && sudo apt-get install git -y \
+    && sudo apt-get install python3-pip -y \
+    && sudo apt-get install apt-transport-https -y \
+    && sudo apt-get install curl -y \
+    && sudo apt-get install unzip -y \
+    && sudo apt-get install psmisc -y \
+    && sudo apt-get install nano -y
 RUN sudo apt-get update --fix-missing
 
 # install nodejs 18.x
 RUN sudo curl -sL https://deb.nodesource.com/setup_18.x | sudo bash -
 RUN sudo apt-get install -y nodejs
-
-# install dep
-RUN sudo npm i -g @nestjs/cli
-RUN sudo npm i -g serve
 
 WORKDIR /app_discogsnewreleasenotification
