@@ -15,9 +15,6 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // eslint-disable-next-line no-console
     console.log(`Artist: ${artistId}`)
 
-    // eslint-disable-next-line no-console
-    console.log('Getting releases data')
-
     /**
      * Get number of releases for a given artist
      * @type {import('axios').AxiosResponse<ApiDiscogsArtistsType>}
@@ -25,6 +22,9 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     const { data: artist } = await request({
         url: `artists/${artistId}`,
     })
+
+    // eslint-disable-next-line no-console
+    console.log('Getting releases data')
 
     /**
      * Get number of releases for a given artist
