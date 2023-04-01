@@ -193,7 +193,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
             ].join(' - '),
             html: Handlebars.compile(readFileSync('./src/templates/mail.template.html').toString())({
                 message: [
-                    `<b>${releasesToSend.length.toLocaleString(env.LOCALE)}</b> new release${releasesToSend.length > 1 ? 's were' : 'was'}`,
+                    `<b>${releasesToSend.length.toLocaleString(env.LOCALE)}</b> new release${releasesToSend.length > 1 ? 's were' : ' was'}`,
                     `found for the artist <a href="https://www.discogs.com/artist/${artist.id}" target="_blank" rel="noopener">${artist.name}</a> on Discogs`,
                     `at ${new Date().toLocaleDateString(env.LOCALE, {
                         year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
