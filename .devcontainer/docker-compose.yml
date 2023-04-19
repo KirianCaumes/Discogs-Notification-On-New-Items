@@ -8,6 +8,8 @@ services:
     tty: true
     volumes:
       - ../:/app_discogsnewreleasenotification:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - 5000:5000
       - 3000:3000
@@ -21,6 +23,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: discogsnewreleasenotification
       MONGO_INITDB_ROOT_PASSWORD: discogsnewreleasenotification
+    volumes:
+      - ../data:/data/db
     ports:
       - 27017:27017
     networks:
@@ -36,6 +40,8 @@ services:
       ME_CONFIG_MONGODB_URL: 'mongodb://discogsnewreleasenotification:discogsnewreleasenotification@mongo:27017/db?authSource=admin'
     networks:
       - discogsnewreleasenotification_network
+    depends_on:
+      - mongo
 
 networks:
   discogsnewreleasenotification_network:
