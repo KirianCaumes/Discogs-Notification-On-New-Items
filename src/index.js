@@ -4,9 +4,7 @@ import mongoose from 'mongoose'
 import Handlebars from 'handlebars'
 import { readFileSync } from 'fs'
 import { Item } from './models'
-import {
-    env, request, sendMail, sleep,
-} from './utils'
+import { env, request, sendMail, sleep } from './utils'
 
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100
@@ -42,15 +40,15 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
      * @type {import('axios').AxiosResponse<ApiDiscogsArtistsReleasesType>[]}
      */
     const releasesResults = await Promise.all(
-        new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE))
-            .fill({})
-            .map((_, i) => request({
+        new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE)).fill({}).map((_, i) =>
+            request({
                 url: `artists/${artistId}/releases`,
                 params: {
                     per_page: MAX_RELEASE_PER_PAGE,
                     page: i + 1,
                 },
-            })),
+            }),
+        ),
     )
 
     /** Array of releases: data are transformed and cleaned */
@@ -81,9 +79,10 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // As releases on Discogs API can also be of type 'master' (this type of release is a folder of releases), we need to get all releases of a master
     for (const [index, master] of mastersFound.entries()) {
         // Print first, last and every ten elements
-        if (index === 0 || (index + 1) % 10 === 0 || index === mastersFound.length - 1)
+        if (index === 0 || (index + 1) % 10 === 0 || index === mastersFound.length - 1) {
             // eslint-disable-next-line no-console
             console.log(`Master ${index + 1}/${mastersFound.length}`)
+        }
 
         /**
          * Get number of versions for a given master
@@ -101,20 +100,20 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
          * @type {import('axios').AxiosResponse<ApiDiscogsMastersVersionsType>[]}
          */
         const mastersResults = await Promise.all(
-            new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE))
-                .fill({})
-                .map((_, i) => request({
+            new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE)).fill({}).map((_, i) =>
+                request({
                     url: `masters/${master.id}/versions`,
                     params: {
                         per_page: MAX_VERSION_PER_PAGE,
                         page: i + 1,
                     },
-                })),
+                }),
+            ),
         )
 
         // Add releases from master to `releasesFound`
 
-        for (const version of mastersResults.map(mastersResult => mastersResult.data.versions).flat())
+        for (const version of mastersResults.map(mastersResult => mastersResult.data.versions).flat()) {
             releasesFound.push({
                 id: version.id,
                 type: 'release',
@@ -126,10 +125,12 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
                 thumb: version.thumb,
                 role: master.role?.match(/[A-Z][a-z]+/g)?.join(' '),
             })
+        }
 
         // If not last item, sleep some times to prevent being blocked
-        if (index !== mastersFound.length - 1)
+        if (index !== mastersFound.length - 1) {
             await sleep(2500)
+        }
     }
 
     // Connect to DB
@@ -156,9 +157,10 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // Check if appearance trully include artist
     for (const [index, appearance] of appearances.entries()) {
         // Print first, last and every ten elements
-        if (index === 0 || (index + 1) % 10 === 0 || index === appearances.length - 1)
+        if (index === 0 || (index + 1) % 10 === 0 || index === appearances.length - 1) {
             // eslint-disable-next-line no-console
             console.log(`Appearance ${index + 1}/${appearances.length}`)
+        }
 
         /**
          * Releases found
@@ -169,17 +171,28 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         })
 
         // If artist not found, push item's id to be removed later
-        if (!releaseResult.data.tracklist.map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])] ?? []).flat().some(x => x.id.toString() === artistId))
+        if (
+            !releaseResult.data.tracklist
+                .map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])] ?? [])
+                .flat()
+                .some(x => x.id.toString() === artistId)
+        ) {
             idsToBeDeleted.push(releaseResult.data.id)
+        }
 
         // If not last item, sleep some times to prevent being blocked
-        if (index !== appearances.length - 1)
+        if (index !== appearances.length - 1) {
             await sleep(2500)
+        }
     }
 
     // Remove items from releasesToSend with idsToBeDeleted
-    for (const idToBeDeleted of idsToBeDeleted.reverse())
-        releasesToSend.splice(releasesToSend.findIndex(x => x.id === idToBeDeleted), 1)
+    for (const idToBeDeleted of idsToBeDeleted.reverse()) {
+        releasesToSend.splice(
+            releasesToSend.findIndex(x => x.id === idToBeDeleted),
+            1,
+        )
+    }
 
     // If new items found, send mail
     if (releasesToSend?.length > 0) {
@@ -189,14 +202,20 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
             subject: [
                 'Discogs',
                 `${releasesToSend.length.toLocaleString(env.LOCALE)} New Release${releasesToSend.length > 1 ? 's' : ''}`,
-                `${new Date().toLocaleString(env.LOCALE, { year: 'numeric', month: '2-digit', day: '2-digit' })} `,
+                artist.name,
             ].join(' - '),
             html: Handlebars.compile(readFileSync('./src/templates/mail.template.html').toString())({
                 message: [
-                    `<b>${releasesToSend.length.toLocaleString(env.LOCALE)}</b> new release${releasesToSend.length > 1 ? 's were' : ' was'}`,
+                    `<b>${releasesToSend.length.toLocaleString(env.LOCALE)}</b> new release${
+                        releasesToSend.length > 1 ? 's were' : ' was'
+                    }`,
                     `found for the artist <a href="https://www.discogs.com/artist/${artist.id}" target="_blank" rel="noopener">${artist.name}</a> on Discogs`,
                     `at ${new Date().toLocaleDateString(env.LOCALE, {
-                        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
                     })}:`,
                 ].join(' '),
                 items: releasesToSend,
@@ -208,11 +227,15 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     }
 
     // Upsert data found in DB
-    await Promise.all(releasesFound.map(item => Item.findOneAndUpdate(
-        { id: item.id, artistId },
-        { id: item.id, title: `${item.artist} - ${item.title}`, artistId },
-        { upsert: true },
-    )))
+    await Promise.all(
+        releasesFound.map(item =>
+            Item.findOneAndUpdate(
+                { id: item.id, artistId },
+                { id: item.id, title: `${item.artist} - ${item.title}`, artistId },
+                { upsert: true },
+            ),
+        ),
+    )
 
     // eslint-disable-next-line no-console
     console.log('Done\r')

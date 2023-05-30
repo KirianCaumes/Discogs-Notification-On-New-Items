@@ -11,16 +11,15 @@ sendgrid.setApiKey(env.SENDGRID_API_KEY)
  * @returns {ReturnType<import('@sendgrid/mail').MailService['send']>} Message info
  */
 export default function sendMail(options) {
-    return sendgrid
-        .send({
-            to: {
-                email: env.MAIL_TO,
-            },
-            from: {
-                email: env.MAIL_FROM,
-                name: 'Discogs Bot',
-            },
-            subject: options.subject,
-            html: options.html,
-        })
+    return sendgrid.send({
+        to: {
+            email: env.MAIL_TO,
+        },
+        from: {
+            email: env.MAIL_FROM,
+            name: 'Discogs Bot',
+        },
+        subject: options.subject,
+        html: options.html,
+    })
 }

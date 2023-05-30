@@ -1,16 +1,22 @@
 {
   "name": "discogsnewreleasenotification",
   "dockerComposeFile": "docker-compose.yml",
+  "postCreateCommand": "bash .devcontainer/init.sh",
   "service": "discogsnewreleasenotification_container",
   "workspaceFolder": "/app_discogsnewreleasenotification",
-  "extensions": [
-    "gruntfuggly.todo-tree",
-    "sibiraj-s.vscode-scss-formatter",
-    "firefox-devtools.vscode-firefox-debug",
-    "msjsdiag.debugger-for-chrome",
-    "davidanson.vscode-markdownlint",
-    "dbaeumer.vscode-eslint",
-    "stylelint.vscode-stylelint",
-    "pflannery.vscode-versionlens"
-  ]
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "gruntfuggly.todo-tree",
+        "sibiraj-s.vscode-scss-formatter",
+        "firefox-devtools.vscode-firefox-debug",
+        "msjsdiag.debugger-for-chrome",
+        "davidanson.vscode-markdownlint",
+        "dbaeumer.vscode-eslint",
+        "stylelint.vscode-stylelint",
+        "pflannery.vscode-versionlens",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
 }
