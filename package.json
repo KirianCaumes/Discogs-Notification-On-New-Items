@@ -8,8 +8,8 @@
     "start": "node --experimental-specifier-resolution=node ./src/index.js",
     "eslint:fix": "eslint --ext .js src/ --fix",
     "eslint": "eslint --ext .js src/",
-    "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write .",
+    "prettier": "npx prettier --check . '!./data'",
+    "prettier:fix": "npx prettier --write . '!./data'",
     "prepare": "husky install"
   },
   "author": "KirianCaumes",
@@ -21,19 +21,19 @@
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
     "axios": "^1.4.0",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.3.1",
     "handlebars": "^4.7.7",
-    "mongoose": "^7.2.1"
+    "mongoose": "^7.4.0"
   },
   "devDependencies": {
-    "eslint": "^8.41.0",
+    "eslint": "^8.45.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsdoc": "^45.0.0",
+    "eslint-plugin-jsdoc": "^46.4.4",
     "eslint-plugin-jsx-a11y": "^6.7.1",
     "husky": "^8.0.3",
-    "lint-staged": "^13.2.2",
-    "prettier": "^2.8.8"
+    "lint-staged": "^13.2.3",
+    "prettier": "^3.0.0"
   }
 }

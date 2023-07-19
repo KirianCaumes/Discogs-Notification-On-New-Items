@@ -148,9 +148,6 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         .sort((a, b) => a.artist?.localeCompare(b.artist) || a.title?.localeCompare(b.title) || a.role?.localeCompare(b.role))
         .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
 
-    /** Ids to be deleted because of Appearance */
-    const idsToBeDeleted = []
-
     /** Release with the role Appearance or Track Appearance */
     const appearances = releasesToSend.filter(release => ['Track Appearance', 'Appearance'].includes(release.role))
 
@@ -170,28 +167,23 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
             url: `releases/${appearance.id}`,
         })
 
-        // If artist not found, push item's id to be removed later
+        // If artist not found delete from releasesToSend
         if (
             !releaseResult.data.tracklist
                 .map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])] ?? [])
                 .flat()
                 .some(x => x.id.toString() === artistId)
         ) {
-            idsToBeDeleted.push(releaseResult.data.id)
+            releasesToSend.splice(
+                releasesToSend.findIndex(x => x.id === releaseResult.data.id),
+                1,
+            )
         }
 
         // If not last item, sleep some times to prevent being blocked
         if (index !== appearances.length - 1) {
             await sleep(2500)
         }
-    }
-
-    // Remove items from releasesToSend with idsToBeDeleted
-    for (const idToBeDeleted of idsToBeDeleted.reverse()) {
-        releasesToSend.splice(
-            releasesToSend.findIndex(x => x.id === idToBeDeleted),
-            1,
-        )
     }
 
     // If new items found, send mail

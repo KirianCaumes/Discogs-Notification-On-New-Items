@@ -7,8 +7,6 @@ module.exports = {
     semi: false,
     singleQuote: true,
     printWidth: 140,
-    quoteProps: 'as-needed',
-    trailingComma: 'all',
     arrowParens: 'avoid',
     singleAttributePerLine: true,
     overrides: [
