@@ -9,6 +9,9 @@ import { env, request, sendMail, sleep } from './utils'
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100
 
+/** Date at the start of the execution */
+const dt = new Date()
+
 for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // eslint-disable-next-line no-console
     console.log(`Artist: ${artistId}`)
@@ -191,25 +194,19 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         // eslint-disable-next-line no-console
         console.log(`Sending mail: ${releasesToSend.length} new item(s) found`)
         await sendMail({
-            subject: [
-                'Discogs',
-                `${releasesToSend.length.toLocaleString(env.LOCALE)} New Release${releasesToSend.length > 1 ? 's' : ''}`,
-                artist.name,
-            ].join(' - '),
+            subject: `${artist.name} - ${releasesToSend.length.toLocaleString(env.LOCALE)} New Release${
+                releasesToSend.length > 1 ? 's' : ''
+            }`,
             html: Handlebars.compile(readFileSync('./src/templates/mail.template.html').toString())({
-                message: [
-                    `<b>${releasesToSend.length.toLocaleString(env.LOCALE)}</b> new release${
-                        releasesToSend.length > 1 ? 's were' : ' was'
-                    }`,
-                    `found for the artist <a href="https://www.discogs.com/artist/${artist.id}" target="_blank" rel="noopener">${artist.name}</a> on Discogs`,
-                    `at ${new Date().toLocaleDateString(env.LOCALE, {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })}:`,
-                ].join(' '),
+                itemsLength: releasesToSend.length.toLocaleString(env.LOCALE),
+                artist,
+                date: dt.toLocaleDateString(env.LOCALE, {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
                 items: releasesToSend,
             }),
         })
