@@ -26,6 +26,5 @@
     }
   },
   "typescript.preferences.importModuleSpecifier": "non-relative",
-  "javascript.preferences.importModuleSpecifier": "non-relative",
-  "css.lint.unknownProperties": "ignore"
+  "javascript.preferences.importModuleSpecifier": "non-relative"
 }

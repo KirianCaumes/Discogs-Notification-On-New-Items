@@ -13,21 +13,10 @@
     </head>
 
     <body>
-        <span
-            style="
-                color: transparent;
-                display: none;
-                height: 0;
-                max-height: 0;
-                max-width: 0;
-                opacity: 0;
-                overflow: hidden;
-                mso-hide: all;
-                visibility: hidden;
-                width: 0;
-            "
-            >{{#each items}}{{#if @index}} // {{/if}}{{this.title}} ({{this.label}}){{/each}}</span
-        >
+        <div style="display: none; max-height: 0px; overflow: hidden">
+            {{#each items}}{{#if @index}} // {{/if}}{{this.title}} ({{this.label}}){{/each}}
+        </div>
+        <div style="display: none; max-height: 0px; overflow: hidden">{{#each previewVoids}}{{{this}}}{{/each}}</div>
         <p>
             <b>{{itemsLength}}</b> new release{{#if items.length}}s{{/if}} found for the artist
             <a

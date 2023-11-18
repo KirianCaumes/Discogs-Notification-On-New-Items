@@ -208,6 +208,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
                     minute: '2-digit',
                 }),
                 items: releasesToSend,
+                previewVoids: new Array(50).fill('&#847; &zwnj; &nbsp; &#8199; &shy;'),
             }),
         })
     } else {
