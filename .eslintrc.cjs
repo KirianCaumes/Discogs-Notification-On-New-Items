@@ -58,6 +58,7 @@ module.exports = {
                 ],
             },
         ],
+        'import/extensions': ['error', 'always'],
         // 'capitalized-comments': ['warn', 'always'], // Not always usefull as it also fix comment with code
         camelcase: ['error'],
         'no-underscore-dangle': ['error', { allow: ['_id', '_attributes', '__value__', '_text'] }],

@@ -3,8 +3,8 @@
 import mongoose from 'mongoose'
 import Handlebars from 'handlebars'
 import { readFileSync } from 'fs'
-import { Item } from './models'
-import { env, request, sendMail, sleep } from './utils'
+import { env, request, sendMail, sleep } from './utils/index.js'
+import Item from './models/item.model.js'
 
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100

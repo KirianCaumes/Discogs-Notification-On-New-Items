@@ -1,5 +1,5 @@
 import sendgrid from '@sendgrid/mail'
-import env from './env.util'
+import env from './env.util.js'
 
 sendgrid.setApiKey(env.SENDGRID_API_KEY)
 
