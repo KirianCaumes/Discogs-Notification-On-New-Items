@@ -20,20 +20,20 @@
   "type": "module",
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",
-    "axios": "^1.6.2",
+    "axios": "^1.6.5",
     "dotenv": "^16.3.1",
     "handlebars": "^4.7.8",
-    "mongoose": "^7.6.6"
+    "mongoose": "^8.1.0"
   },
   "devDependencies": {
-    "eslint": "^8.55.0",
+    "eslint": "^8.56.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-jsdoc": "^46.9.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^48.0.2",
     "eslint-plugin-jsx-a11y": "^6.8.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
-    "prettier": "^3.1.0"
+    "prettier": "^3.2.4"
   }
 }
