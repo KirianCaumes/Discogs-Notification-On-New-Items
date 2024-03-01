@@ -17,7 +17,7 @@ export default function sendMail(options) {
         },
         from: {
             email: env.MAIL_FROM,
-            name: 'Discogs Bot',
+            name: 'Discogs Release Bot',
         },
         subject: options.subject,
         html: options.html,

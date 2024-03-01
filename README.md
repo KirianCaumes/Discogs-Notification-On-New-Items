@@ -1,4 +1,4 @@
-# Discogs  Notification On New Items
+# Discogs Notification On New Items
 
 A useful script to get email notifications of new items by one or more artist(s) on Discogs. 📨
 

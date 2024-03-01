@@ -12,12 +12,15 @@ const MAX_VERSION_PER_PAGE = 100
 /** Date at the start of the execution */
 const dt = new Date()
 
+// Connect to DB
+await mongoose.connect(env.DB_URI)
+
 for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // eslint-disable-next-line no-console
     console.log(`Artist: ${artistId}`)
 
     /**
-     * Get number of releases for a given artist
+     * Get informations for the artist
      * @type {import('axios').AxiosResponse<ApiDiscogsArtistsType>}
      */
     const { data: artist } = await request({
@@ -136,9 +139,6 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         }
     }
 
-    // Connect to DB
-    await mongoose.connect(env.DB_URI)
-
     /**
      * Items found from DB
      * @type {import('./models/item.model').ItemSchema[]}
@@ -230,5 +230,8 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // eslint-disable-next-line no-console
     console.log('Done\r')
 }
+
+// Disconnect from DB
+await mongoose.disconnect()
 
 process.exit(0)
