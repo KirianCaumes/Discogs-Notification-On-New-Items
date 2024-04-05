@@ -18,6 +18,12 @@
     "node": "20.x.x"
   },
   "type": "module",
+  "funding": [
+    {
+      "type": "paypal",
+      "url": "https://www.paypal.me/KirianCaumes"
+    }
+  ],
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",
     "axios": "^1.6.5",
