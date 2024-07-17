@@ -1,4 +1,4 @@
-import Item from './item.model.js'
+import Item from 'models/item.model'
 
 // eslint-disable-next-line import/prefer-default-export
 export { Item }

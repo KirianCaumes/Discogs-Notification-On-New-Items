@@ -15,7 +15,8 @@
         "dbaeumer.vscode-eslint",
         "stylelint.vscode-stylelint",
         "pflannery.vscode-versionlens",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "streetsidesoftware.code-spell-checker"
       ]
     }
   }

@@ -1,10 +1,12 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
+import { readFileSync } from 'fs'
+import { setTimeout } from 'timers/promises'
 import mongoose from 'mongoose'
 import Handlebars from 'handlebars'
-import { readFileSync } from 'fs'
-import { env, request, sendMail, sleep } from './utils/index.js'
-import Item from './models/item.model.js'
+import { env, request, sendMail } from 'utils/index'
+import Item from 'models/item.model'
+import type { ApiDiscogsArtists, ApiDiscogsArtistsReleases, ApiDiscogsMastersVersions, ApiDiscogsReleases } from 'interfaces'
 
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100
@@ -13,17 +15,16 @@ const MAX_VERSION_PER_PAGE = 100
 const dt = new Date()
 
 // Connect to DB
-await mongoose.connect(env.DB_URI)
+await mongoose.connect(env.DB_URI!)
 
 for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // eslint-disable-next-line no-console
     console.log(`Artist: ${artistId}`)
 
     /**
-     * Get informations for the artist
-     * @type {import('axios').AxiosResponse<ApiDiscogsArtistsType>}
+     * Get information for the artist
      */
-    const { data: artist } = await request({
+    const { data: artist } = await request<ApiDiscogsArtists>({
         url: `artists/${artistId}`,
     })
 
@@ -32,9 +33,8 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
     /**
      * Get number of releases for a given artist
-     * @type {import('axios').AxiosResponse<ApiDiscogsArtistsReleasesType>}
      */
-    const releasesTotalResult = await request({
+    const releasesTotalResult = await request<ApiDiscogsArtistsReleases>({
         url: `artists/${artistId}/releases`,
         params: {
             per_page: 1,
@@ -43,11 +43,10 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
     /**
      * Get all releases for a given artist
-     * @type {import('axios').AxiosResponse<ApiDiscogsArtistsReleasesType>[]}
      */
     const releasesResults = await Promise.all(
         new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE)).fill({}).map((_, i) =>
-            request({
+            request<ApiDiscogsArtistsReleases>({
                 url: `artists/${artistId}/releases`,
                 params: {
                     per_page: MAX_RELEASE_PER_PAGE,
@@ -70,7 +69,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
             format: release.format,
             date: release.year !== 0 ? release.year?.toString() : undefined,
             thumb: release.thumb,
-            role: release.role?.match(/[A-Z][a-z]+/g).join(' '),
+            role: release.role?.match(/[A-Z][a-z]+/g)?.join(' '),
         }))
 
     /** Release of type `release` found */
@@ -92,9 +91,8 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         /**
          * Get number of versions for a given master
-         * @type {import('axios').AxiosResponse<ApiDiscogsMastersVersionsType>}
          */
-        const mastersTotalResult = await request({
+        const mastersTotalResult = await request<ApiDiscogsMastersVersions>({
             url: `masters/${master.id}/versions`,
             params: {
                 per_page: 1,
@@ -103,11 +101,10 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         /**
          * Get all versions for a given master
-         * @type {import('axios').AxiosResponse<ApiDiscogsMastersVersionsType>[]}
          */
         const mastersResults = await Promise.all(
             new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE)).fill({}).map((_, i) =>
-                request({
+                request<ApiDiscogsMastersVersions>({
                     url: `masters/${master.id}/versions`,
                     params: {
                         per_page: MAX_VERSION_PER_PAGE,
@@ -118,7 +115,6 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         )
 
         // Add releases from master to `releasesFound`
-
         for (const version of mastersResults.map(mastersResult => mastersResult.data.versions).flat()) {
             releasesFound.push({
                 id: version.id,
@@ -135,26 +131,25 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         // If not last item, sleep some times to prevent being blocked
         if (index !== mastersFound.length - 1) {
-            await sleep(2500)
+            await setTimeout(2500)
         }
     }
 
     /**
      * Items found from DB
-     * @type {import('./models/item.model').ItemSchema[]}
      */
     const itemsDb = await Item.find({ artistId })
 
     /** List of item to send by mail */
     const releasesToSend = releasesFound
         .filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
-        .sort((a, b) => a.artist?.localeCompare(b.artist) || a.title?.localeCompare(b.title) || a.role?.localeCompare(b.role))
+        .sort((a, b) => a.artist?.localeCompare(b.artist) ?? a.title?.localeCompare(b.title) ?? a.role?.localeCompare(b.role ?? ''))
         .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
 
     /** Release with the role Appearance or Track Appearance */
-    const appearances = releasesToSend.filter(release => ['Track Appearance', 'Appearance'].includes(release.role))
+    const appearances = releasesToSend.filter(release => ['Track Appearance', 'Appearance'].includes(release.role ?? ''))
 
-    // Check if appearance trully include artist
+    // Check if appearance truly include artist
     for (const [index, appearance] of appearances.entries()) {
         // Print first, last and every ten elements
         if (index === 0 || (index + 1) % 10 === 0 || index === appearances.length - 1) {
@@ -164,9 +159,8 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         /**
          * Releases found
-         * @type {import('axios').AxiosResponse<ApiDiscogsReleasesType>}
          */
-        const releaseResult = await request({
+        const releaseResult = await request<ApiDiscogsReleases>({
             url: `releases/${appearance.id}`,
         })
 
@@ -185,7 +179,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
         // If not last item, sleep some times to prevent being blocked
         if (index !== appearances.length - 1) {
-            await sleep(2500)
+            await setTimeout(2500)
         }
     }
 
