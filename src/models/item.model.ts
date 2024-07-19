@@ -1,5 +1,14 @@
 import mongoose from 'mongoose'
 
+export interface ItemInterface {
+    /** Id */
+    id: number
+    /** Title */
+    title: string
+    /** ArtistId */
+    artistId: string
+}
+
 const itemSchema = new mongoose.Schema(
     {
         id: { type: Number },
@@ -11,6 +20,6 @@ const itemSchema = new mongoose.Schema(
     },
 )
 
-const Item = mongoose.model('Item', itemSchema)
+const Item = mongoose.model<ItemInterface>('Item', itemSchema)
 
 export default Item
