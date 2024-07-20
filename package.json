@@ -11,7 +11,7 @@
     "prettier": "npx prettier --check . '!./data'",
     "prettier:fix": "npx prettier --write . '!./data'",
     "cspell": "npx cspell ./ --no-progress --dot --gitignore",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "author": "KirianCaumes",
   "license": "MIT",

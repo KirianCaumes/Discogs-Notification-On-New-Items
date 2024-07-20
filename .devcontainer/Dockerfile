@@ -35,4 +35,4 @@ RUN sudo apt-get install nodejs -y
 # install dep
 RUN sudo npm i -g gitmoji-cli@8.2.2
 
-WORKDIR /app_discogsnewreleasenotification
+WORKDIR /app_discogs-new-release-notification

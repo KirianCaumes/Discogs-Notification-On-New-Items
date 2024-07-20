@@ -191,7 +191,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
             subject: `${artist.name} - ${releasesToSend.length.toLocaleString(env.LOCALE)} New Release${
                 releasesToSend.length > 1 ? 's' : ''
             }`,
-            html: Handlebars.compile(readFileSync('./src/templates/mail.template.html').toString())({
+            html: Handlebars.compile(readFileSync('./src/templates/mail.template.hbs').toString())({
                 itemsLength: releasesToSend.length.toLocaleString(env.LOCALE),
                 artist,
                 date: dt.toLocaleDateString(env.LOCALE, {

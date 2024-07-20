@@ -1,9 +1,9 @@
 {
-  "name": "discogsnewreleasenotification",
+  "name": "discogs-new-release-notification",
   "dockerComposeFile": "docker-compose.yml",
   "postCreateCommand": "bash .devcontainer/init.sh",
-  "service": "discogsnewreleasenotification_container",
-  "workspaceFolder": "/app_discogsnewreleasenotification",
+  "service": "discogs-new-release-notification_container",
+  "workspaceFolder": "/app_discogs-new-release-notification",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -16,7 +16,8 @@
         "stylelint.vscode-stylelint",
         "pflannery.vscode-versionlens",
         "esbenp.prettier-vscode",
-        "streetsidesoftware.code-spell-checker"
+        "streetsidesoftware.code-spell-checker",
+        "andrejunges.handlebars"
       ]
     }
   }

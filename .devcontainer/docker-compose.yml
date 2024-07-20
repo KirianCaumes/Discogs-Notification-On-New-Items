@@ -1,48 +1,48 @@
 version: '3'
 services:
-  discogsnewreleasenotification_container:
+  discogs-new-release-notification_container:
     build:
       context: ./
       dockerfile: ./Dockerfile
     stdin_open: true
     tty: true
     volumes:
-      - ../:/app_discogsnewreleasenotification:rw
+      - ../:/app_discogs-new-release-notification:rw
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
       - 5000:5000
       - 3000:3000
     networks:
-      - discogsnewreleasenotification_network
+      - discogs-new-release-notification_network
     depends_on:
       - mongo
 
   mongo:
     image: mongo:6.0.14
     environment:
-      MONGO_INITDB_ROOT_USERNAME: discogsnewreleasenotification
-      MONGO_INITDB_ROOT_PASSWORD: discogsnewreleasenotification
+      MONGO_INITDB_ROOT_USERNAME: discogs-new-release-notification
+      MONGO_INITDB_ROOT_PASSWORD: discogs-new-release-notification
     volumes:
       - ../data:/data/db
     ports:
       - 27017:27017
     networks:
-      - discogsnewreleasenotification_network
+      - discogs-new-release-notification_network
 
   mongo-express:
     image: mongo-express
     ports:
       - 5001:8081
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: discogsnewreleasenotification
-      ME_CONFIG_MONGODB_ADMINPASSWORD: discogsnewreleasenotification
-      ME_CONFIG_MONGODB_URL: 'mongodb://discogsnewreleasenotification:discogsnewreleasenotification@mongo:27017/db?authSource=admin'
+      ME_CONFIG_MONGODB_ADMINUSERNAME: discogs-new-release-notification
+      ME_CONFIG_MONGODB_ADMINPASSWORD: discogs-new-release-notification
+      ME_CONFIG_MONGODB_URL: 'mongodb://discogs-new-release-notification:discogs-new-release-notification@mongo:27017/db?authSource=admin'
     networks:
-      - discogsnewreleasenotification_network
+      - discogs-new-release-notification_network
     depends_on:
       - mongo
 
 networks:
-  discogsnewreleasenotification_network:
+  discogs-new-release-notification_network:
     driver: 'bridge'
