@@ -9,6 +9,10 @@
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[handlebars]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "html.format.wrapAttributes": "force-expand-multiline",
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
