@@ -1,5 +1,5 @@
 {
-  "name": "discogs-new-release-notification",
+  "name": "discogs-notification-on-new-items",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

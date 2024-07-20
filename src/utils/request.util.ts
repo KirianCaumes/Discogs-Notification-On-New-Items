@@ -4,7 +4,7 @@ import env from 'utils/env.util'
 const { request } = axios.create({
     baseURL: 'https://api.discogs.com/',
     headers: {
-        'User-Agent': 'discogs-new-release-notification',
+        'User-Agent': 'discogs-notification-on-new-items',
     },
     params: {
         token: env.DISCOGS_API_KEY,

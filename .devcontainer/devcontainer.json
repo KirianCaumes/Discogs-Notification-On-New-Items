@@ -1,9 +1,9 @@
 {
-  "name": "discogs-new-release-notification",
+  "name": "discogs-notification-on-new-items",
   "dockerComposeFile": "docker-compose.yml",
   "postCreateCommand": "bash .devcontainer/init.sh",
-  "service": "discogs-new-release-notification_container",
-  "workspaceFolder": "/app_discogs-new-release-notification",
+  "service": "discogs-notification-on-new-items_container",
+  "workspaceFolder": "/app_discogs-notification-on-new-items",
   "customizations": {
     "vscode": {
       "extensions": [
