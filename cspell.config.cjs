@@ -33,7 +33,6 @@ module.exports = {
         'catno',
         'tracklist',
         'extraartists',
-        'sendgrid',
         'zwnj',
         'Kirian',
         'Caumes',

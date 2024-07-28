@@ -1,8 +1,16 @@
-import sendgrid from '@sendgrid/mail'
 import env from 'utils/env.util'
-import type { MailService } from '@sendgrid/mail'
+import nodemailer from 'nodemailer'
+import type SMTPTransport from 'nodemailer/lib/smtp-transport'
 
-sendgrid.setApiKey(env.SENDGRID_API_KEY!)
+const transporter = nodemailer.createTransport({
+    host: env.MAIL_HOST!,
+    port: env.MAIL_PORT!,
+    secure: env.MAIL_PORT === 465,
+    auth: {
+        user: env.MAIL_USER,
+        pass: env.MAIL_PASS,
+    },
+})
 
 /**
  * Send an email
@@ -12,14 +20,15 @@ export default function sendMail(options: {
     subject: string
     /** Html */
     html: string
-}): ReturnType<MailService['send']> {
-    return sendgrid.send({
-        to: {
-            email: env.MAIL_TO!,
-        },
+}): Promise<SMTPTransport.SentMessageInfo> {
+    return transporter.sendMail({
         from: {
-            email: env.MAIL_FROM,
-            name: 'Discogs Release Bot',
+            address: env.MAIL_FROM,
+            name: 'Discogs Neat Bot',
+        },
+        to: {
+            address: env.MAIL_TO!,
+            name: '',
         },
         subject: options.subject,
         html: options.html,
