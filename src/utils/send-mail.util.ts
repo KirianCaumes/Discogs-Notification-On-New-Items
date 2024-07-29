@@ -24,7 +24,7 @@ export default function sendMail(options: {
     return transporter.sendMail({
         from: {
             address: env.MAIL_FROM,
-            name: 'Discogs Neat Bot',
+            name: 'Discogs Release Bot',
         },
         to: {
             address: env.MAIL_TO!,
