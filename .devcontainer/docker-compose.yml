@@ -18,7 +18,7 @@ services:
       - mongo
 
   mongo:
-    image: mongo:6.0.14
+    image: mongo:7.0.9-jammy
     environment:
       MONGO_INITDB_ROOT_USERNAME: discogs-notification-on-new-items
       MONGO_INITDB_ROOT_PASSWORD: discogs-notification-on-new-items
