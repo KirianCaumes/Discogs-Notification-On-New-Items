@@ -26,27 +26,27 @@
     }
   ],
   "dependencies": {
-    "axios": "^1.7.5",
-    "dotenv": "^16.4.5",
+    "axios": "^1.8.3",
+    "dotenv": "^16.4.7",
     "handlebars": "^4.7.8",
-    "mongoose": "^8.5.4",
-    "nodemailer": "^6.9.14"
+    "mongoose": "^8.12.1",
+    "nodemailer": "^6.10.0"
   },
   "devDependencies": {
-    "@types/node": "^20.16.1",
-    "@types/nodemailer": "^6.4.15",
+    "@types/node": "^20.17.24",
+    "@types/nodemailer": "^6.4.17",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "cspell": "^8.14.2",
-    "eslint": "^8.57.0",
+    "cspell": "^8.17.5",
+    "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^50.2.2",
-    "husky": "^9.1.5",
-    "lint-staged": "^15.2.9",
-    "prettier": "^3.3.3",
-    "tsx": "^4.18.0"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.3"
   }
 }
