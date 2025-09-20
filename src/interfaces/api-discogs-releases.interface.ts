@@ -160,7 +160,7 @@ export default interface ApiDiscogsReleases {
         /** Duration */
         duration: string
         /** Extraartists */
-        extraartists: Array<{
+        extraartists?: Array<{
             /** Name */
             name: string
             /** Anv */
@@ -177,7 +177,7 @@ export default interface ApiDiscogsReleases {
             resource_url: string
         }>
         /** Artists */
-        artists: Array<{
+        artists?: Array<{
             /** Name */
             name: string
             /** Anv */

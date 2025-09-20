@@ -1,12 +1,16 @@
 /* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
 import { readFileSync } from 'fs'
 import { setTimeout } from 'timers/promises'
 import mongoose from 'mongoose'
 import Handlebars from 'handlebars'
-import { env, request, sendMail } from 'utils/index'
 import Item from 'models/item.model'
-import type { ApiDiscogsArtists, ApiDiscogsArtistsReleases, ApiDiscogsMastersVersions, ApiDiscogsReleases } from 'interfaces'
+import env from 'utils/env.util'
+import request from 'utils/request.util'
+import sendMail from 'utils/send-mail.util'
+import type ApiDiscogsArtists from 'interfaces/api-discogs-artists.interface'
+import type ApiDiscogsArtistsReleases from 'interfaces/api-discogs-artists-releases.interface'
+import type ApiDiscogsMastersVersions from 'interfaces/api-discogs-masters-versions.interface'
+import type ApiDiscogsReleases from 'interfaces/api-discogs-releases.interface'
 
 const MAX_RELEASE_PER_PAGE = 500
 const MAX_VERSION_PER_PAGE = 100
@@ -15,6 +19,7 @@ const MAX_VERSION_PER_PAGE = 100
 const dt = new Date()
 
 // Connect to DB
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 await mongoose.connect(env.DB_URI!)
 
 for (const artistId of env.DISCOGS_ARTIST_IDS) {
@@ -67,9 +72,9 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
             label: release.label,
             title: release.title,
             format: release.format,
-            date: release.year !== 0 ? release.year?.toString() : undefined,
+            date: release.year?.toString(),
             thumb: release.thumb,
-            role: release.role?.match(/[A-Z][a-z]+/g)?.join(' '),
+            role: release.role.match(/[A-Z][a-z]+/g)?.join(' '),
         }))
 
     /** Release of type `release` found */
@@ -142,8 +147,8 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
 
     /** List of item to send by mail */
     const releasesToSend = releasesFound
-        .filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
-        .sort((a, b) => a.artist?.localeCompare(b.artist) ?? a.title?.localeCompare(b.title) ?? a.role?.localeCompare(b.role ?? ''))
+        .filter(itemFound => !itemsDb.map(itemDb => itemDb.id as number).includes(itemFound.id))
+        .sort((a, b) => (a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title) || a.role?.localeCompare(b.role ?? '')) ?? 0)
         .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
 
     /** Release with the role Appearance or Track Appearance */
@@ -167,7 +172,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
         // If artist not found delete from releasesToSend
         if (
             !releaseResult.data.tracklist
-                .map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])] ?? [])
+                .map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])])
                 .flat()
                 .some(x => x.id.toString() === artistId)
         ) {
@@ -184,7 +189,7 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     }
 
     // If new items found, send mail
-    if (releasesToSend?.length > 0) {
+    if (releasesToSend.length > 0) {
         // eslint-disable-next-line no-console
         console.log(`Sending mail: ${releasesToSend.length} new item(s) found`)
         await sendMail({

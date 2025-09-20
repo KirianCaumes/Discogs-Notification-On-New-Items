@@ -1,10 +1,11 @@
-import env from 'utils/env.util'
 import nodemailer from 'nodemailer'
+import env from 'utils/env.util'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport'
 
 const transporter = nodemailer.createTransport({
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     host: env.MAIL_HOST!,
-    port: env.MAIL_PORT!,
+    port: env.MAIL_PORT,
     secure: env.MAIL_PORT === 465,
     auth: {
         user: env.MAIL_USER,
@@ -14,6 +15,7 @@ const transporter = nodemailer.createTransport({
 
 /**
  * Send an email
+ * @returns Info about the sent message
  */
 export default function sendMail(options: {
     /** Subject */
@@ -27,6 +29,7 @@ export default function sendMail(options: {
             name: 'Discogs Release Bot',
         },
         to: {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             address: env.MAIL_TO!,
             name: '',
         },

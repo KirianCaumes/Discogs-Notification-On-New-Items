@@ -34,7 +34,7 @@ export default interface ApiDiscogsArtistsReleases {
         /** Resource_url */
         resource_url: string
         /** Year */
-        year: number
+        year?: number
         /** Thumb */
         thumb: string
         /** Stats */
