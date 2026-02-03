@@ -1,2 +1,44 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Development
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Data
 /data
-/node_modules
+
+# Build
+dist/
+build/
+.tsbuildinfo
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+README.md
+LICENSE
+
+# Testing
+.eslintignore
+.prettierignore
+cspell.config.cjs
+eslint.config.mjs
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Environment
+.env*
