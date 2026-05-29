@@ -21,6 +21,8 @@ RUN sudo apt-get update
 RUN sudo apt-get install curl -y
 RUN sudo apt-get install nano -y
 RUN sudo apt-get install git -y
+RUN sudo apt-get install sqlite3 -y
+RUN sudo apt-get install build-essential -y
 RUN sudo apt-get update --fix-missing
 RUN export EDITOR="/usr/bin/nano"
 

@@ -1,12 +1,11 @@
 /* eslint-disable no-restricted-syntax */
 import { readFileSync } from 'fs'
 import { setTimeout } from 'timers/promises'
-import mongoose from 'mongoose'
 import Handlebars from 'handlebars'
-import Item from 'models/item.model'
 import env from 'utils/env.util'
 import request from 'utils/request.util'
 import sendMail from 'utils/send-mail.util'
+import Item from 'utils/db.util'
 import type ApiDiscogsArtists from 'interfaces/api-discogs-artists.interface'
 import type ApiDiscogsArtistsReleases from 'interfaces/api-discogs-artists-releases.interface'
 import type ApiDiscogsMastersVersions from 'interfaces/api-discogs-masters-versions.interface'
@@ -17,10 +16,6 @@ const MAX_VERSION_PER_PAGE = 100
 
 /** Date at the start of the execution */
 const dt = new Date()
-
-// Connect to DB
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-await mongoose.connect(env.DB_URI!)
 
 for (const artistId of env.DISCOGS_ARTIST_IDS) {
     // eslint-disable-next-line no-console
@@ -143,11 +138,11 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     /**
      * Items found from DB
      */
-    const itemsDb = await Item.find({ artistId })
+    const itemsDb = await Item.getAllIdsByArtistId({ artistId })
 
     /** List of item to send by mail */
     const releasesToSend = releasesFound
-        .filter(itemFound => !itemsDb.map(itemDb => itemDb.id as number).includes(itemFound.id))
+        .filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
         .sort((a, b) => (a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title) || a.role?.localeCompare(b.role ?? '')) ?? 0)
         .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
 
@@ -216,21 +211,10 @@ for (const artistId of env.DISCOGS_ARTIST_IDS) {
     }
 
     // Upsert data found in DB
-    await Promise.all(
-        releasesFound.map(item =>
-            Item.findOneAndUpdate(
-                { id: item.id, artistId },
-                { id: item.id, title: `${item.artist} - ${item.title}`, artistId },
-                { upsert: true },
-            ),
-        ),
-    )
+    await Promise.all(releasesFound.map(item => Item.upsert({ id: item.id, artistId }, { title: `${item.artist} - ${item.title}` })))
 
     // eslint-disable-next-line no-console
     console.log('Done\r')
 }
-
-// Disconnect from DB
-await mongoose.disconnect()
 
 process.exit(0)

@@ -17,7 +17,8 @@
         "pflannery.vscode-versionlens",
         "esbenp.prettier-vscode",
         "streetsidesoftware.code-spell-checker",
-        "andrejunges.handlebars"
+        "andrejunges.handlebars",
+        "qwtel.sqlite-viewer"
       ]
     }
   }
