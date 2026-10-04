@@ -15,11 +15,11 @@
 
 <body>
     <div style="display: none; max-height: 0px; overflow: hidden">
-        {{#each items}}{{#if @index}} // {{/if}}{{this.title}} ({{this.label}}){{/each}}
+        {{#each items}}{{#if @index}} // {{/if}}{{this.title}}{{#if this.label}} ({{this.label}}){{/if}}{{/each}}
     </div>
     <div style="display: none; max-height: 0px; overflow: hidden">{{#each previewVoids}}{{{this}}}{{/each}}</div>
     <p>
-        <b>{{itemsLength}}</b> new release{{#if items.length}}s{{/if}} found for the artist
+        <b>{{itemsLength}}</b> new release{{#if isPlural}}s{{/if}} found for the artist
         <a
             href="https://www.discogs.com/artist/{{artist.id}}"
             target="_blank"
@@ -41,7 +41,7 @@
                     <img
                         style="width: 100%; height: 100%; object-fit: contain; font-size: 0"
                         src="{{this.thumb}}"
-                        alt="{{this.title}} ({{this.label}})"
+                        alt="{{this.title}}{{#if this.label}} ({{this.label}}){{/if}}"
                     />
                     {{/if}}
                 </a>
@@ -52,7 +52,7 @@
                     href="https://www.discogs.com/release/{{this.id}}"
                     target="_blank"
                     rel="noopener"
-                ><b>{{this.artist}}</b> - {{this.title}} ({{this.label}})</a>
+                ><b>{{this.artist}}</b> - {{this.title}}{{#if this.label}} ({{this.label}}){{/if}}</a>
                 <br />
                 <a
                     style="color: black; text-decoration: none"

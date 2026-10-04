@@ -6,7 +6,7 @@
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
-    "baseUrl": "./src",
+    "paths": { "*": ["./src/*"] },
     "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
@@ -15,5 +15,5 @@
     "allowJs": true,
     "skipLibCheck": true
   },
-  "include": ["src", "eslint.config.js", ".lintstagedrc.cjs", ".prettierrc.cjs", "cspell.config.cjs"]
+  "include": ["src", "test", "eslint.config.js", ".lintstagedrc.cjs", ".prettierrc.cjs", "cspell.config.cjs"]
 }

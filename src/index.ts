@@ -1,220 +1,106 @@
-/* eslint-disable no-restricted-syntax */
-import { readFileSync } from 'fs'
-import { setTimeout } from 'timers/promises'
-import Handlebars from 'handlebars'
+import { Effect, Layer } from 'effect'
 import env from 'utils/env.util'
-import request from 'utils/request.util'
-import sendMail from 'utils/send-mail.util'
-import Item from 'utils/db.util'
-import type ApiDiscogsArtists from 'interfaces/api-discogs-artists.interface'
-import type ApiDiscogsArtistsReleases from 'interfaces/api-discogs-artists-releases.interface'
-import type ApiDiscogsMastersVersions from 'interfaces/api-discogs-masters-versions.interface'
-import type ApiDiscogsReleases from 'interfaces/api-discogs-releases.interface'
+import { Discogs, DiscogsLive } from 'utils/discogs.util'
+import { Items, ItemsLive } from 'utils/db.util'
+import { MailLive } from 'utils/send-mail.util'
+import { DiscordLive } from 'utils/send-discord.util'
+import { FailuresLive, notifyReleases, recordFailure, reportFailures } from 'utils/notify.util'
 
-const MAX_RELEASE_PER_PAGE = 500
-const MAX_VERSION_PER_PAGE = 100
+/**
+ * Notify the new releases of an artist, then save them
+ * @param artistId Artist id
+ * @param isSilent Save the releases without notifying
+ * @returns Nothing
+ */
+const checkArtist = (artistId: string, isSilent: boolean) =>
+    Effect.gen(function* () {
+        const discogs = yield* Discogs
+        const items = yield* Items
 
-/** Date at the start of the execution */
-const dt = new Date()
+        yield* Effect.log(`Artist: ${artistId}`)
 
-for (const artistId of env.DISCOGS_ARTIST_IDS) {
-    // eslint-disable-next-line no-console
-    console.log(`Artist: ${artistId}`)
+        const { name, releases } = yield* discogs.getDiscography(artistId)
 
-    /**
-     * Get information for the artist
-     */
-    const { data: artist } = await request<ApiDiscogsArtists>({
-        url: `artists/${artistId}`,
+        const idsDb = yield* items.getIds(artistId)
+
+        /** New releases */
+        const releasesToSend = releases.filter(release => !idsDb.has(release.id))
+
+        yield* Effect.log(`${name}: ${releasesToSend.length} new release(s), ${releases.length} in total (before: ${idsDb.size})`)
+
+        if (releasesToSend.length > 0 && isSilent) {
+            yield* Effect.log('Silent mode: saved without notifying')
+        } else if (releasesToSend.length > 0 && idsDb.size === 0) {
+            // Do not notify on the first run of an artist, it would send its whole discography
+            yield* Effect.log('First run: saved without notifying')
+        } else if (releasesToSend.length > 0) {
+            /** New releases with their own details */
+            const detailed = yield* Effect.forEach(releasesToSend, release => discogs.getReleaseDetails(release, artistId))
+
+            const ignored = detailed.filter(release => !release.isCredited)
+            if (ignored.length > 0) {
+                const titles = ignored.map(release => `${release.artist} - ${release.title} (${release.id})`).join(', ')
+                yield* Effect.log(`${ignored.length} ignored, ${name} not credited on these versions: ${titles}`)
+            }
+
+            /** New releases to notify, sorted */
+            const toNotify = detailed
+                .filter(release => release.isCredited)
+                .sort((a, b) => a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title) || a.id - b.id)
+
+            if (toNotify.length > 0) {
+                yield* Effect.log(`${toNotify.length} release(s) to notify`)
+                yield* notifyReleases({ artistId, name, releases: toNotify })
+            }
+        }
+
+        // Saved only once notified, so a notification failing on every channel is sent again on the next run
+        yield* items.upsertMany(
+            artistId,
+            releases.map(release => ({ id: release.id, title: `${release.artist} - ${release.title}` })),
+        )
     })
 
-    // eslint-disable-next-line no-console
-    console.log('Getting releases data')
-
-    /**
-     * Get number of releases for a given artist
-     */
-    const releasesTotalResult = await request<ApiDiscogsArtistsReleases>({
-        url: `artists/${artistId}/releases`,
-        params: {
-            per_page: 1,
-        },
-    })
-
-    /**
-     * Get all releases for a given artist
-     */
-    const releasesResults = await Promise.all(
-        new Array(Math.ceil(releasesTotalResult.data.pagination.items / MAX_RELEASE_PER_PAGE)).fill({}).map((_, i) =>
-            request<ApiDiscogsArtistsReleases>({
-                url: `artists/${artistId}/releases`,
-                params: {
-                    per_page: MAX_RELEASE_PER_PAGE,
-                    page: i + 1,
-                },
-            }),
-        ),
+/**
+ * Check every artist: an artist failing does not prevent checking the others
+ * @param artistIds Artist ids
+ * @param options Options
+ * @param options.isSilent Save the releases without notifying
+ * @returns Nothing
+ */
+export const checkArtists = (
+    artistIds: Array<string>,
+    options: {
+        /** Save the releases without notifying */
+        isSilent: boolean
+    },
+) =>
+    Effect.forEach(
+        artistIds,
+        artistId =>
+            checkArtist(artistId, options.isSilent).pipe(
+                // Already recorded by each channel
+                Effect.catchTag('NotificationError', () => Effect.void),
+                Effect.catchCause(cause => recordFailure(`Artist ${artistId}`, cause)),
+            ),
+        { discard: true },
     )
 
-    /** Array of releases: data are transformed and cleaned */
-    const releases = releasesResults
-        .map(releasesResult => releasesResult.data.releases)
-        .flat()
-        .map(release => ({
-            id: release.id,
-            type: release.type,
-            artist: release.artist,
-            label: release.label,
-            title: release.title,
-            format: release.format,
-            date: release.year?.toString(),
-            thumb: release.thumb,
-            role: release.role.match(/[A-Z][a-z]+/g)?.join(' '),
-        }))
+const program = checkArtists(env.DISCOGS_ARTIST_IDS, {
+    // `npm start -- --silent`: save the releases without notifying, to initialize the database
+    isSilent: process.argv.includes('--silent'),
+}).pipe(
+    // Discogs and the database are opened for the whole run, and closed at the end
+    Effect.provide(Layer.mergeAll(DiscogsLive, ItemsLive)),
+    // Unexpected error, or Discogs or the database could not be opened
+    Effect.catchCause(cause => recordFailure('Run', cause)),
+    Effect.andThen(reportFailures),
+    // Notification channels, also used to report the errors
+    Effect.provide(Layer.mergeAll(MailLive, DiscordLive, FailuresLive)),
+)
 
-    /** Release of type `release` found */
-    const releasesFound = releases.filter(release => release.type === 'release')
-
-    /** Release of type `master` found */
-    const mastersFound = releases.filter(release => release.type === 'master')
-
-    // eslint-disable-next-line no-console
-    console.log('Getting masters data')
-
-    // As releases on Discogs API can also be of type 'master' (this type of release is a folder of releases), we need to get all releases of a master
-    for (const [index, master] of mastersFound.entries()) {
-        // Print first, last and every ten elements
-        if (index === 0 || (index + 1) % 10 === 0 || index === mastersFound.length - 1) {
-            // eslint-disable-next-line no-console
-            console.log(`Master ${index + 1}/${mastersFound.length}`)
-        }
-
-        /**
-         * Get number of versions for a given master
-         */
-        const mastersTotalResult = await request<ApiDiscogsMastersVersions>({
-            url: `masters/${master.id}/versions`,
-            params: {
-                per_page: 1,
-            },
-        })
-
-        /**
-         * Get all versions for a given master
-         */
-        const mastersResults = await Promise.all(
-            new Array(Math.ceil(mastersTotalResult.data.pagination.items / MAX_VERSION_PER_PAGE)).fill({}).map((_, i) =>
-                request<ApiDiscogsMastersVersions>({
-                    url: `masters/${master.id}/versions`,
-                    params: {
-                        per_page: MAX_VERSION_PER_PAGE,
-                        page: i + 1,
-                    },
-                }),
-            ),
-        )
-
-        // Add releases from master to `releasesFound`
-        for (const version of mastersResults.map(mastersResult => mastersResult.data.versions).flat()) {
-            releasesFound.push({
-                id: version.id,
-                type: 'release',
-                artist: master.artist,
-                label: version.label,
-                title: version.title,
-                format: version.format,
-                date: version.released !== '0' ? version.released : undefined,
-                thumb: version.thumb,
-                role: master.role?.match(/[A-Z][a-z]+/g)?.join(' '),
-            })
-        }
-
-        // If not last item, sleep some times to prevent being blocked
-        if (index !== mastersFound.length - 1) {
-            await setTimeout(2500)
-        }
-    }
-
-    /**
-     * Items found from DB
-     */
-    const itemsDb = await Item.getAllIdsByArtistId({ artistId })
-
-    /** List of item to send by mail */
-    const releasesToSend = releasesFound
-        .filter(itemFound => !itemsDb.map(itemDb => itemDb.id).includes(itemFound.id))
-        .sort((a, b) => (a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title) || a.role?.localeCompare(b.role ?? '')) ?? 0)
-        .filter((itemFound, index, self) => self.findIndex(item => item.id === itemFound.id) === index)
-
-    /** Release with the role Appearance or Track Appearance */
-    const appearances = releasesToSend.filter(release => ['Track Appearance', 'Appearance'].includes(release.role ?? ''))
-
-    // Check if appearance truly include artist
-    for (const [index, appearance] of appearances.entries()) {
-        // Print first, last and every ten elements
-        if (index === 0 || (index + 1) % 10 === 0 || index === appearances.length - 1) {
-            // eslint-disable-next-line no-console
-            console.log(`Appearance ${index + 1}/${appearances.length}`)
-        }
-
-        /**
-         * Releases found
-         */
-        const releaseResult = await request<ApiDiscogsReleases>({
-            url: `releases/${appearance.id}`,
-        })
-
-        // If artist not found delete from releasesToSend
-        if (
-            !releaseResult.data.tracklist
-                .map(x => [...(x.extraartists ?? []), ...(x.artists ?? [])])
-                .flat()
-                .some(x => x.id.toString() === artistId)
-        ) {
-            releasesToSend.splice(
-                releasesToSend.findIndex(x => x.id === releaseResult.data.id),
-                1,
-            )
-        }
-
-        // If not last item, sleep some times to prevent being blocked
-        if (index !== appearances.length - 1) {
-            await setTimeout(2500)
-        }
-    }
-
-    // If new items found, send mail
-    if (releasesToSend.length > 0) {
-        // eslint-disable-next-line no-console
-        console.log(`Sending mail: ${releasesToSend.length} new item(s) found`)
-        await sendMail({
-            subject: `${artist.name} - ${releasesToSend.length.toLocaleString(env.LOCALE)} New Release${
-                releasesToSend.length > 1 ? 's' : ''
-            }`,
-            html: Handlebars.compile(readFileSync('./src/templates/mail.template.hbs').toString())({
-                itemsLength: releasesToSend.length.toLocaleString(env.LOCALE),
-                artist,
-                date: dt.toLocaleDateString(env.LOCALE, {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
-                items: releasesToSend,
-                previewVoids: new Array(50).fill('&#847; &zwnj; &nbsp; &#8199; &shy;'),
-            }),
-        })
-    } else {
-        // eslint-disable-next-line no-console
-        console.log('No data to send')
-    }
-
-    // Upsert data found in DB
-    await Promise.all(releasesFound.map(item => Item.upsert({ id: item.id, artistId }, { title: `${item.artist} - ${item.title}` })))
-
-    // eslint-disable-next-line no-console
-    console.log('Done\r')
+// Only when run, not when imported by the tests
+if (import.meta.main) {
+    const failuresCount = await Effect.runPromise(program)
+    process.exit(failuresCount > 0 ? 1 : 0)
 }
-
-process.exit(0)

@@ -7,7 +7,7 @@ import globals from 'globals'
 
 export default /** @type {import('eslint').Linter.Config[]} */ ([
     {
-        ignores: ['client', 'dist', 'data/**'],
+        ignores: ['dist', 'data/**'],
     },
     esJsdoc.configs['flat/recommended-typescript'],
     esJs.configs.recommended,
@@ -68,6 +68,11 @@ export default /** @type {import('eslint').Linter.Config[]} */ ([
                 },
             ],
             '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
+            // `describe` and `it` of node:test return promises handled by the test runner
+            '@typescript-eslint/no-floating-promises': [
+                'error',
+                { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it'], package: 'node:test' }] },
+            ],
             'jsdoc/require-jsdoc': [
                 'warn',
                 {
@@ -145,13 +150,6 @@ export default /** @type {import('eslint').Linter.Config[]} */ ([
         files: ['**.{mjs,cjs,js}', '**/**.{cjs,mjs,js}'],
         rules: {
             'jsdoc/check-tag-names': ['warn', { typed: false }],
-        },
-    },
-    {
-        files: ['test/**/*.ts'],
-        rules: {
-            'no-restricted-imports': 'off',
-            '@typescript-eslint/no-unsafe-argument': 'off',
         },
     },
 ])
