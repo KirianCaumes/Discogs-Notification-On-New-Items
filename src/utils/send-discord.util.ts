@@ -3,7 +3,17 @@ import env from 'utils/env.util'
 import type { FailuresNotification, ReleasesNotification } from 'interfaces/notification.interface'
 
 /** Discord limits of a message: https://discord.com/developers/docs/resources/message#embed-object-embed-limits */
-const LIMITS = { EMBEDS: 10, TITLE: 256, DESCRIPTION: 4096, FIELDS: 25, FIELD_NAME: 256, FIELD_VALUE: 1024, FOOTER: 2048, TOTAL: 6000 }
+const LIMITS = {
+    EMBEDS: 10,
+    TITLE: 256,
+    AUTHOR_NAME: 256,
+    DESCRIPTION: 4096,
+    FIELDS: 25,
+    FIELD_NAME: 256,
+    FIELD_VALUE: 1024,
+    FOOTER: 2048,
+    TOTAL: 6000,
+}
 const TIMEOUT_MS = 30_000
 /** Color of the left border of an embed, by role */
 const COLORS: Record<string, number> = { Main: 0x2ecc71, Appearance: 0x3498db, Unofficial: 0xe67e22, Credit: 0x9b59b6, Error: 0xe74c3c }
@@ -15,6 +25,13 @@ interface Embed {
     url?: string
     /** Description */
     description?: string
+    /** Author, displayed above the title */
+    author?: {
+        /** Name */
+        name: string
+        /** Url of the name */
+        url?: string
+    }
     /** Color of the left border */
     color?: number
     /** Fields, displayed as a grid when inline */
@@ -105,6 +122,7 @@ const post = (body: object) =>
  */
 const getSize = (embed: Embed) =>
     embed.title.length +
+    (embed.author?.name.length ?? 0) +
     (embed.description?.length ?? 0) +
     (embed.footer?.text.length ?? 0) +
     (embed.fields ?? []).reduce((total, field) => total + field.name.length + field.value.length, 0)
@@ -118,6 +136,7 @@ const truncate = (embed: Embed): Embed => ({
     ...embed,
     title: embed.title.slice(0, LIMITS.TITLE),
     description: embed.description?.slice(0, LIMITS.DESCRIPTION),
+    author: embed.author && { ...embed.author, name: embed.author.name.slice(0, LIMITS.AUTHOR_NAME) },
     fields: embed.fields
         ?.slice(0, LIMITS.FIELDS)
         .map(field => ({ ...field, name: field.name.slice(0, LIMITS.FIELD_NAME), value: field.value.slice(0, LIMITS.FIELD_VALUE) })),
@@ -198,10 +217,11 @@ export const DiscordLive = Layer.succeed(Discord, {
     sendReleases: ({ title, artistId, name, releases, date }) =>
         Effect.suspend(() =>
             sendDiscord({
-                content: `**[${title}](https://www.discogs.com/artist/${artistId})**`,
+                content: title,
                 embeds: releases.map(release => ({
                     title: `${release.artist} - ${release.title}`,
                     url: `https://www.discogs.com/release/${release.id}`,
+                    author: { name, url: `https://www.discogs.com/artist/${artistId}` },
                     color: COLORS[release.role],
                     fields: [
                         { name: '💽 Format', value: release.format ?? '-' },
@@ -218,7 +238,7 @@ export const DiscordLive = Layer.succeed(Discord, {
     sendFailures: ({ title, failures, date }) =>
         Effect.suspend(() =>
             sendDiscord({
-                content: `**❌ ${title}**`,
+                content: `❌ ${title}`,
                 embeds: failures.map(({ context, message }) => ({
                     title: `⚠️ ${context}`,
                     description: `\`\`\`${message.slice(0, 4000)}\`\`\``,
