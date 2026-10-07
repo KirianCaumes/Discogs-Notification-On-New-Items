@@ -226,7 +226,11 @@ export const DiscordLive = Layer.succeed(Discord, {
                     fields: [
                         { name: '💽 Format', value: release.format ?? '-' },
                         { name: '🏷️ Label', value: release.label ?? '-' },
-                        { name: '📅 Date', value: release.date ?? '-' },
+                        { name: '🆕 Release', value: release.date ?? '-' },
+                        {
+                            name: '📅 Listed',
+                            value: release.dateAdded ? `<t:${Math.floor(new Date(release.dateAdded).getTime() / 1000)}:D>` : '-',
+                        },
                         { name: '🎭 Role', value: release.role },
                     ],
                     thumbnail: release.thumb ? { url: release.thumb } : undefined,

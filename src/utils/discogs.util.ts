@@ -29,6 +29,8 @@ export interface Release {
     date?: string
     /** Thumbnail url */
     thumb?: string
+    /** Date added on Discogs: "2005-03-16T02:45:48-08:00", only known once detailed by the REST API */
+    dateAdded?: string
     /** "CD, EP, Enhanced"… */
     format?: string
     /** Label */
@@ -234,26 +236,24 @@ const isArtistCredited = (data: ApiDiscogsRelease, artistId: string) => {
      * @param track Track
      * @returns Ids
      */
-    const getIds = (track: NonNullable<ApiDiscogsRelease['tracklist']>[number]): Array<number> => [
+    const getIds = (
+        track: Pick<ApiDiscogsRelease['tracklist'][number], 'artists' | 'extraartists' | 'sub_tracks'>,
+    ): Array<number | null> => [
         ...(track.artists ?? []).map(artist => artist.id),
         ...(track.extraartists ?? []).map(artist => artist.id),
         ...(track.sub_tracks ?? []).flatMap(getIds),
     ]
-    return [data, ...(data.tracklist ?? [])].flatMap(getIds).includes(+artistId)
+    return [data, ...data.tracklist].flatMap(getIds).includes(+artistId)
 }
 
 /**
- * Get the details of a release from the Discogs API, when the GraphQL API only gave the ones of its master.
- * If the release can not be fetched (deleted, blocked…), it keeps the details of its master.
+ * Get the details of a release from the Discogs API: its date added, and its own details when the GraphQL API only gave the ones of its master.
+ * If the release can not be fetched (deleted, blocked…), it keeps the details it has.
  * @param release Release
  * @param artistId Artist id
  * @returns Release with its own details
  */
 const getReleaseDetails = (release: Release, artistId: string) => {
-    if (release.isDetailed) {
-        return Effect.succeed(release)
-    }
-
     const fetchRelease = Effect.tryPromise({
         try: async () => {
             const res = await fetch(`https://api.discogs.com/releases/${release.id}`, {
@@ -289,22 +289,31 @@ const getReleaseDetails = (release: Release, artistId: string) => {
     return fetchRelease.pipe(
         Effect.tapError(error => Effect.logWarning(error.message)),
         Effect.retry({ times: 3, schedule: Schedule.exponential('2 seconds'), while: error => error.isRetryable }),
-        Effect.map((data): Release => ({
-            ...release,
-            title: data.title,
-            date: formatDate(data.released),
-            thumb: data.thumb === '' ? undefined : data.thumb,
-            format: formatFormats(data.formats ?? []),
-            label: data.labels?.[0]?.name,
-            isDetailed: true,
-            // Other versions of a compilation do not always include the artist
-            isCredited: isArtistCredited(data, artistId),
-        })),
+        Effect.map((data): Release => {
+            if (release.isDetailed) {
+                return { ...release, dateAdded: data.date_added }
+            }
+            return {
+                ...release,
+                title: data.title,
+                date: formatDate(data.released),
+                thumb: data.thumb === '' ? undefined : data.thumb,
+                dateAdded: data.date_added,
+                format: formatFormats(data.formats),
+                label: data.labels[0]?.name,
+                isDetailed: true,
+                // Other versions of a compilation do not always include the artist
+                isCredited: isArtistCredited(data, artistId),
+            }
+        }),
         // A permanent error must not block the artist: keep the details of the master, but without the tracklist the artist can only be
         // considered credited on its own releases. A temporary error still fails, so the release is checked again on the next run.
-        Effect.catchTag('DiscogsError', error =>
-            error.isRetryable ? Effect.fail(error) : Effect.succeed({ ...release, isCredited: release.role === 'Main' }),
-        ),
+        Effect.catchTag('DiscogsError', error => {
+            if (error.isRetryable) {
+                return Effect.fail(error)
+            }
+            return Effect.succeed(release.isDetailed ? release : { ...release, isCredited: release.role === 'Main' })
+        }),
     )
 }
 
@@ -324,7 +333,7 @@ export class Discogs extends Context.Service<
             },
             DiscogsError
         >
-        /** Get the details of a release, when the discography only gave the ones of its master */
+        /** Get the details of a release: its date added, and its own details when the discography only gave the ones of its master */
         readonly getReleaseDetails: (release: Release, artistId: string) => Effect.Effect<Release, DiscogsError>
     }
 >()('Discogs') {}

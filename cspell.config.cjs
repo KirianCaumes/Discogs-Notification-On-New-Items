@@ -24,5 +24,7 @@ module.exports = {
         'apollographql',
         'impers',
         'digipak',
+        'catno',
+        'Barcodes',
     ],
 }
